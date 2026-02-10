@@ -4,6 +4,7 @@ import co.eci.snake.core.Board;
 import co.eci.snake.core.Direction;
 import co.eci.snake.core.Snake;
 import co.eci.snake.core.engine.GameClock;
+import co.eci.snake.ui.legacy.SnakeApp;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -11,25 +12,32 @@ public final class SnakeRunner implements Runnable {
   private final Snake snake;
   private final Board board;
   private final GameClock clock;
+  private final SnakeApp app;
+  private final boolean isPlayer;
   private final int baseSleepMs = 80;
   private final int turboSleepMs = 40;
   private int turboTicks = 0;
 
-  public SnakeRunner(Snake snake, Board board, GameClock clock) {
+  public SnakeRunner(Snake snake, Board board, GameClock clock, SnakeApp app, boolean isPlayer) {
     this.snake = snake;
     this.board = board;
     this.clock = clock;
+    this.app = app;
+    this.isPlayer = isPlayer;
   }
 
   @Override
   public void run() {
     try {
-      while (!Thread.currentThread().isInterrupted()) {
+      while (!Thread.currentThread().isInterrupted() && snake.isAlive()) {
         checkPause();
-        maybeTurn();
+        if (!isPlayer) {
+          maybeTurn();
+        }
         var res = board.step(snake);
         if (res == Board.MoveResult.HIT_OBSTACLE) {
-          randomTurn();
+          snake.die();
+          app.notifyDeath(snake);
         } else if (res == Board.MoveResult.ATE_TURBO) {
           turboTicks = 100;
         }
