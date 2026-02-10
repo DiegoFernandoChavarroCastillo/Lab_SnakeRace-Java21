@@ -9,6 +9,8 @@ public final class Snake {
   private volatile Direction direction;
   private int maxLength = 5;
 
+  private volatile boolean alive = true;
+
   private Snake(Position start, Direction dir) {
     body.addFirst(start);
     this.direction = dir;
@@ -46,5 +48,17 @@ public final class Snake {
       maxLength++;
     while (body.size() > maxLength)
       body.removeLast();
+  }
+
+  public synchronized boolean isAlive() {
+    return alive;
+  }
+
+  public synchronized void die() {
+    this.alive = false;
+  }
+
+  public synchronized int getLength() {
+    return body.size();
   }
 }

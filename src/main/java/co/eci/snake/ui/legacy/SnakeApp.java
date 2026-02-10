@@ -21,6 +21,7 @@ public final class SnakeApp extends JFrame {
   private final JButton actionButton;
   private final GameClock clock;
   private final java.util.List<Snake> snakes = new java.util.ArrayList<>();
+  private final java.util.concurrent.atomic.AtomicReference<Snake> firstToDie = new java.util.concurrent.atomic.AtomicReference<>();
 
   public SnakeApp() {
     super("The Snake Race");
@@ -48,7 +49,7 @@ public final class SnakeApp extends JFrame {
     this.clock = new GameClock(60, () -> SwingUtilities.invokeLater(gamePanel::repaint));
 
     var exec = Executors.newVirtualThreadPerTaskExecutor();
-    snakes.forEach(s -> exec.submit(new SnakeRunner(s, board, clock)));
+    snakes.forEach(s -> exec.submit(new SnakeRunner(s, board, clock, this)));
 
     actionButton.addActionListener((ActionEvent e) -> togglePause());
 
@@ -128,14 +129,41 @@ public final class SnakeApp extends JFrame {
     clock.start();
   }
 
+  public void notifyDeath(Snake s) {
+    firstToDie.compareAndSet(null, s);
+  }
+
   private void togglePause() {
     if ("Action".equals(actionButton.getText())) {
       actionButton.setText("Resume");
       clock.pause();
+      showStatistics();
     } else {
       actionButton.setText("Action");
       clock.resume();
     }
+  }
+
+  private void showStatistics() {
+    Snake longest = snakes.stream()
+        .filter(Snake::isAlive)
+        .max(java.util.Comparator.comparingInt(Snake::getLength))
+        .orElse(null);
+
+    if (longest == null) {
+      longest = snakes.stream()
+          .max(java.util.Comparator.comparingInt(Snake::getLength))
+          .orElse(null);
+    }
+
+    Snake worst = firstToDie.get();
+
+    String msg = String.format("PAUSED\nLongest Snake: %d segments (Snake %d)\nWorst Snake (First to die): %s",
+        longest != null ? longest.getLength() : 0,
+        longest != null ? snakes.indexOf(longest) : -1,
+        worst != null ? "Snake " + snakes.indexOf(worst) : "None yet");
+
+    JOptionPane.showMessageDialog(this, msg, "Game Statistics", JOptionPane.INFORMATION_MESSAGE);
   }
 
   public static final class GamePanel extends JPanel {

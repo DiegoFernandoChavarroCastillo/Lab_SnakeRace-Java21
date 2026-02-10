@@ -186,9 +186,17 @@ Observe que los hilos `SnakeRunner` seguían ejecutándose en segundo plano aunq
 **Verificación:**
 - Al presionar **Action** o **Espacio**, todas las serpientes se detienen inmediatamente. Al reanudar, continúan su curso sin saltos de posición.
 
-### PROBLEMA 4: Lectura Inconsistente de Estado (Pendiente)
-*   Estado: Pendiente
-*   Objetivo: Garantizar que al pausar, las estadísticas (serpiente más larga/muerta) se capturen de forma "congelada" y consistente.
+### PROBLEMA 4: Lectura Inconsistente de Estado (Resuelto)
+Se resolvió la necesidad de leer el estado de todas las serpientes de forma atómica al pausar para mostrar estadísticas precisas.
+
+**Acciones tomadas:**
+- **Snake.java**: Se añadió un estado `alive` y un método `getLength()`.
+- **SnakeRunner.java**: Ahora detecta choques con obstáculos, cambia el estado de la serpiente a muerta y notifica a la aplicación.
+- **SnakeApp.java**: Implementa `notifyDeath` para capturar cuál serpiente murió primero. Al pausar, calcula la serpiente viva más larga y muestra un cuadro de diálogo con las estadísticas (`Longest Snake` y `Worst Snake`).
+  - La sincronización del Reloj (Problema 3) garantiza que este cálculo se haga sobre un estado "congelado", sin interferencia de los hilos de las serpientes.
+
+**Verificación:**
+- Al pausar el juego, aparece un mensaje informando cuál es la serpiente más larga en ese momento y cuál fue la primera en morir, coincidiendo siempre con el estado visual del tablero.
 
 ---
 
