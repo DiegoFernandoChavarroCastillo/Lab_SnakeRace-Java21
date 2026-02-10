@@ -175,9 +175,16 @@ Identifique que, aunque las colecciones eran seguras (Problema 1), las operacion
 **Verificación:**
 - El test de estres ([ConcurrencyTest.java](file:///c:/Users/chava/OneDrive/Escritorio/Tareas/ARWS/Lab02/Lab_SnakeRace-Java21/src/main/java/co/eci/snake/verify/ConcurrencyTest.java)) fue actualizado para verificar la integridad de los snapshots bajo carga, confirmando que no hay excepciones ni inconsistencias.
 
-### PROBLEMA 3: Sistema de Pausa Roto (Pendiente)
-*   Estado: Pendiente
-*   Objetivo: Implementar un mecanismo real de suspensión de hilos trabajadores (SnakeRunner) usando `wait/notify`.
+### PROBLEMA 3: Sistema de Pausa Roto (Resuelto)
+Observe que los hilos `SnakeRunner` seguían ejecutándose en segundo plano aunque el reloj estuviera pausado, lo que causaba que las serpientes se movieran sin que el usuario viera la actualización hasta reanudar.
+
+**Acciones tomadas:**
+- **GameClock.java**: Transforme el GameClock en un monitor de sincronización. Sincronice los métodos `pause()` y `resume()`, y este último ahora llama a `notifyAll()`.
+- **SnakeRunner.java**: Ahora recibe la instancia de `GameClock`. En su ciclo principal, verifica si el juego está pausado y, de ser así, entra en estado `wait()` sobre el objeto del reloj.
+- **SnakeApp.java**: Actualice para pasar la instancia del reloj a los hilos de las serpientes al inicio.
+
+**Verificación:**
+- Al presionar **Action** o **Espacio**, todas las serpientes se detienen inmediatamente. Al reanudar, continúan su curso sin saltos de posición.
 
 ### PROBLEMA 4: Lectura Inconsistente de Estado (Pendiente)
 *   Estado: Pendiente

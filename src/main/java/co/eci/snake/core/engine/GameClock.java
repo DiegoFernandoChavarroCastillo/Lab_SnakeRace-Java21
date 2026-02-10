@@ -15,7 +15,8 @@ public final class GameClock implements AutoCloseable {
   private final java.util.concurrent.atomic.AtomicReference<GameState> state = new AtomicReference<>(GameState.STOPPED);
 
   public GameClock(long periodMillis, Runnable tick) {
-    if (periodMillis <= 0) throw new IllegalArgumentException("periodMillis must be > 0");
+    if (periodMillis <= 0)
+      throw new IllegalArgumentException("periodMillis must be > 0");
     this.periodMillis = periodMillis;
     this.tick = java.util.Objects.requireNonNull(tick, "tick");
   }
@@ -23,13 +24,31 @@ public final class GameClock implements AutoCloseable {
   public void start() {
     if (state.compareAndSet(GameState.STOPPED, GameState.RUNNING)) {
       scheduler.scheduleAtFixedRate(() -> {
-        if (state.get() == GameState.RUNNING) tick.run();
+        if (state.get() == GameState.RUNNING)
+          tick.run();
       }, 0, periodMillis, TimeUnit.MILLISECONDS);
     }
   }
 
-  public void pause()  { state.set(GameState.PAUSED); }
-  public void resume() { state.set(GameState.RUNNING); }
-  public void stop()   { state.set(GameState.STOPPED); }
-  @Override public void close() { scheduler.shutdownNow(); }
+  public synchronized void pause() {
+    state.set(GameState.PAUSED);
+  }
+
+  public synchronized void resume() {
+    state.set(GameState.RUNNING);
+    this.notifyAll();
+  }
+
+  public void stop() {
+    state.set(GameState.STOPPED);
+  }
+
+  public boolean isPaused() {
+    return state.get() == GameState.PAUSED;
+  }
+
+  @Override
+  public void close() {
+    scheduler.shutdownNow();
+  }
 }
