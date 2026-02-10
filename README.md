@@ -164,9 +164,16 @@ Identifique que uso de colecciones estándar (`HashSet`, `HashMap` y `ArrayDeque
 
 ---
 
-### PROBLEMA 2: Falta de Sincronización en Snake (Pendiente)
-*   Estado: Pendiente
-*   Objetivo: Asegurar que las lecturas de `maxLength` y las operaciones concurrentes entre `Board.step()` y `Snake.advance()` sean perfectamente atómicas.
+### PROBLEMA 2: Falta de Sincronización en Snake (Resuelto)
+Identifique que, aunque las colecciones eran seguras (Problema 1), las operaciones de la serpiente (avanzar, snapshot, obtener cabeza) no eran atómicas entre sí.
+
+**Acciones tomadas:**
+- **Snake.java**: Se sincronizaron los métodos `advance`, `snapshot` y `head`.
+  - Esto nos garantiza que un `snapshot` (leido por la UI) vea un estado consistente de la serpiente (el cuerpo y la longitud) sin estados intermedios corruptos mientras la serpiente avanza.
+  - Se asegura la visibilidad y atomicidad de la variable `maxLength` dentro del bloque sincronizado de `advance`.
+
+**Verificación:**
+- El test de estres ([ConcurrencyTest.java](file:///c:/Users/chava/OneDrive/Escritorio/Tareas/ARWS/Lab02/Lab_SnakeRace-Java21/src/main/java/co/eci/snake/verify/ConcurrencyTest.java)) fue actualizado para verificar la integridad de los snapshots bajo carga, confirmando que no hay excepciones ni inconsistencias.
 
 ### PROBLEMA 3: Sistema de Pausa Roto (Pendiente)
 *   Estado: Pendiente
