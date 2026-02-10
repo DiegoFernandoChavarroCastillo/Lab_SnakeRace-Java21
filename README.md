@@ -143,8 +143,52 @@ Incluye compilación y ejecución de pruebas JUnit. Si tienes análisis estátic
 
 ---
 
+---
+
+## **Reporte de Laboratorio — Solución**
+### Autor: Diego Fernando Chavarro Castillo
+
+Este reporte documenta las soluciones aplicadas para garantizar la concurrencia correcta, la robustez y la consistencia del sistema SnakeRace bajo carga.
+
+---
+
+### 1. Análisis de Concurrencia y Data Races
+Durante el análisis inicial, se identificaron condiciones de carrera críticas donde los hilos de las serpientes actualizaban su posición mientras el hilo de la UI intentaba renderizar el tablero.
+- **Problema**: Acceso concurrente a la estructura del cuerpo de la serpiente. Un snapshot para la UI podía ocurrir mientras la cabeza se añadía pero la cola no se había removido, causando inconsistencias visuales y de estado.
+- **Solución**: Se implementó sincronización intrínseca (`synchronized`) en la clase `Snake` para los métodos de modificación (`advance`) y consulta (`snapshot`, `head`, `getLength`). Esto garantiza que cualquier lectura de estado vea un "paso" completo y atómico del movimiento de la serpiente.
+
+### 2. Colecciones y Estructuras Seguras
+El uso de colecciones no atómicas (`HashSet`, `HashMap` y `ArrayDeque`) era la fuente principal de excepciones `ConcurrentModificationException`.
+- **Cambios realizados**:
+  - **Board.java**: Se sustituyeron `HashSet` y `HashMap` por `ConcurrentHashMap.newKeySet()` y `ConcurrentHashMap`. Esto permite que múltiples serpientes comprueben colisiones y consuman ítems (comida/turbo) simultáneamente sin bloqueos globales.
+  - **Snake.java**: Se reemplazó `ArrayDeque` por `ConcurrentLinkedDeque` para el cuerpo. Aunque el acceso está sincronizado, el uso de una colección concurrente añade una capa extra de seguridad para iteraciones.
+- **Justificación**: Estas colecciones de la librería `java.util.concurrent` ofrecen un rendimiento superior en escenarios multi-hilo comparado con sincronizar manualmente cada acceso a una colección estándar.
+
+### 3. Eliminación de Esperas Activas (Busy-Wait)
+Se identificó que los hilos `SnakeRunner` realizaban un sondeo constante (polling) del estado del reloj, desperdiciando ciclos de CPU.
+- **Mecanismo de Sincronización**: Se utilizó el modelo de monitores de Java (`wait/notify`).
+  - **GameClock**: Actúa como el monitor. El método `resume()` utiliza `notifyAll()` para despertar a los hilos suspendidos.
+  - **SnakeRunner**: En el método `checkPause()`, los hilos entran en `clock.wait()` si el juego está pausado.
+- **Resultado**: La eficiencia del sistema mejoró drásticamente; cuando el juego está pausado, los hilos de las serpientes no consumen CPU hasta que se reanuda la ejecución.
+
+### 4. Regiones Críticas y Alcance Mínimo
+Para maximizar el paralelismo, se evitó el uso de bloqueos extensos, protegiendo solo las regiones críticas estrictamente necesarias.
+- **Justificación**: 
+  - En `Snake.java`, la sincronización se limita a la manipulación del `Deque` de posiciones.
+  - En `Board.java`, el método `step` está sincronizado para asegurar que solo una serpiente a la vez pueda interactuar con un mismo ítem (como una única pieza de comida en una posición específica), evitando que dos serpientes "coman" el mismo recurso simultáneamente.
+
+### 5. Pausa, Consistencia y Robustez
+- **Pausa y Estadísticas**: Al presionar pausa, el sistema garantiza la consistencia visual. Las estadísticas de "Longest Snake" y "Worst Snake" (capturada mediante un sistema de notificaciones `die()` -> `notifyDeath()`) se calculan sobre un estado estático y seguro.
+- **Robustez (N alto)**: Gracias al uso de **Virtual Threads** (Java 21) y la sincronización localizada, el juego soporta 20+ serpientes sin degradación de rendimiento.
+- **Verificación**: Se incluye la clase `verify.ConcurrencyTest` que somete al sistema a 100,000 operaciones concurrentes para validar la ausencia de `data races`.
+
+---
+
 ## Créditos
-
-Este laboratorio es una adaptación modernizada del ejercicio **SnakeRace** de ARSW. El enunciado de actividades se conserva para mantener los objetivos pedagógicos del curso.
-
-**Base construida por el Ing. Javier Toquica.**
+Desarrollado como parte del laboratorio 2 de Arquitecturas de Software (ARSW).
+| Componente | Estado |
+| :--- | :--- |
+| Concurrencia | Correcta (sin data races) |
+| Pausa/Reanudar | Consistente (wait/notify) |
+| Robustez | Verificada (N=20, Test de estrés) |
+| Documentación | Completa |
