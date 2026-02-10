@@ -13,15 +13,17 @@ public final class SnakeRunner implements Runnable {
   private final Board board;
   private final GameClock clock;
   private final SnakeApp app;
+  private final boolean isPlayer;
   private final int baseSleepMs = 80;
   private final int turboSleepMs = 40;
   private int turboTicks = 0;
 
-  public SnakeRunner(Snake snake, Board board, GameClock clock, SnakeApp app) {
+  public SnakeRunner(Snake snake, Board board, GameClock clock, SnakeApp app, boolean isPlayer) {
     this.snake = snake;
     this.board = board;
     this.clock = clock;
     this.app = app;
+    this.isPlayer = isPlayer;
   }
 
   @Override
@@ -29,12 +31,13 @@ public final class SnakeRunner implements Runnable {
     try {
       while (!Thread.currentThread().isInterrupted() && snake.isAlive()) {
         checkPause();
-        maybeTurn();
+        if (!isPlayer) {
+          maybeTurn();
+        }
         var res = board.step(snake);
         if (res == Board.MoveResult.HIT_OBSTACLE) {
           snake.die();
           app.notifyDeath(snake);
-          break;
         } else if (res == Board.MoveResult.ATE_TURBO) {
           turboTicks = 100;
         }

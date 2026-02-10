@@ -49,7 +49,10 @@ public final class SnakeApp extends JFrame {
     this.clock = new GameClock(60, () -> SwingUtilities.invokeLater(gamePanel::repaint));
 
     var exec = Executors.newVirtualThreadPerTaskExecutor();
-    snakes.forEach(s -> exec.submit(new SnakeRunner(s, board, clock, this)));
+    for (int i = 0; i < snakes.size(); i++) {
+      boolean isPlayer = (i == 0 || i == 1);
+      exec.submit(new SnakeRunner(snakes.get(i), board, clock, this, isPlayer));
+    }
 
     actionButton.addActionListener((ActionEvent e) -> togglePause());
 
