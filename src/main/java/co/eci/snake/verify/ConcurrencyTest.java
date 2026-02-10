@@ -35,7 +35,14 @@ public class ConcurrencyTest {
         executor.submit(() -> {
             for (int i = 0; i < iterations; i++) {
                 try {
-                    snake.snapshot();
+                    java.util.Deque<Position> snap = snake.snapshot();
+                    // Basic consistency: size should at least be 1 (the head)
+                    if (snap.isEmpty()) {
+                        System.err.println("Error: Empty snake snapshot!");
+                        errors.incrementAndGet();
+                    }
+                    // Without a getter for maxLength, we can't be perfect, 
+                    // but we can check if size changes wildly or is null.
                 } catch (Exception e) {
                     System.err.println("Reader error: " + e);
                     errors.incrementAndGet();
