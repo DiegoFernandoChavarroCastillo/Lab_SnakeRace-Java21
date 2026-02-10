@@ -143,8 +143,39 @@ Incluye compilación y ejecución de pruebas JUnit. Si tienes análisis estátic
 
 ---
 
+---
+
+## **Solución**
+### Autor: Diego Fernando Chavarro Castillo
+
+En esta sección estan documentados los procesos de las soluciones propuestas (4 problemas) y el progreso de las soluciones aplicadas a los problemas identificados en el laboratorio.
+
+### PROBLEMA 1: Colecciones NO Thread-Safe (Resuelto)
+Identifique que uso de colecciones estándar (`HashSet`, `HashMap` y `ArrayDeque`) causaba excepciones `ConcurrentModificationException` bajo carga moderada/alta.
+
+**Acciones tomadas:**
+- **Board.java**: Reemplace `HashSet` y `HashMap` por versiones thread-safe:
+  - `mice`, `obstacles` y `turbo` ahora utilizan `ConcurrentHashMap.newKeySet()`.
+  - `teleports` utiliza `ConcurrentHashMap`.
+- **Snake.java**: Reemplace `ArrayDeque` por `ConcurrentLinkedDeque` para el cuerpo de la serpiente, permitiendo iteraciones (snapshots) seguras mientras la serpiente avanza.
+
+**Verificación:**
+- Cree un test de estrés ([ConcurrencyTest.java](file:///c:/Users/chava/OneDrive/Escritorio/Tareas/ARWS/Lab02/Lab_SnakeRace-Java21/src/main/java/co/eci/snake/verify/ConcurrencyTest.java)) que realiza 100,000 operaciones simultáneas de lectura y escritura sin fallos.
+
+---
+
+### PROBLEMA 2: Falta de Sincronización en Snake (Pendiente)
+*   Estado: Pendiente
+*   Objetivo: Asegurar que las lecturas de `maxLength` y las operaciones concurrentes entre `Board.step()` y `Snake.advance()` sean perfectamente atómicas.
+
+### PROBLEMA 3: Sistema de Pausa Roto (Pendiente)
+*   Estado: Pendiente
+*   Objetivo: Implementar un mecanismo real de suspensión de hilos trabajadores (SnakeRunner) usando `wait/notify`.
+
+### PROBLEMA 4: Lectura Inconsistente de Estado (Pendiente)
+*   Estado: Pendiente
+*   Objetivo: Garantizar que al pausar, las estadísticas (serpiente más larga/muerta) se capturen de forma "congelada" y consistente.
+
+---
+
 ## Créditos
-
-Este laboratorio es una adaptación modernizada del ejercicio **SnakeRace** de ARSW. El enunciado de actividades se conserva para mantener los objetivos pedagógicos del curso.
-
-**Base construida por el Ing. Javier Toquica.**
